@@ -3,55 +3,78 @@ import numpy as np
 
 from algorithms.algorithm import Algorithm
 
-class GradientPreferences(Algorithm):
-
-    def __init__(self, k: int, alpha: float = 0.1):
+class GradientPreference(Algorithm):
+    def __init__(self, k: int, alpha: float):
         """
-        Inicializa el algoritmo de gradiente de preferencias.
-
-        :param k: Número de brazos.
-        :param alpha: Tasa de aprendizaje para ajustar las preferencias.
-        :raises ValueError: Si alpha no es positivo.
-        """
-        assert alpha > 0, "El parámetro alpha debe ser mayor que 0."
+        Implementación del método de Gradiente de Preferencias según Sutton y Barto (2018).
         
+        Args:
+            k (int): Número de acciones/brazos
+            alpha (float): Tasa de aprendizaje
+        """
         super().__init__(k)
         self.alpha = alpha
-        self.preferences = np.zeros(k)  # Inicializa las preferencias en 0
-        self.probabilities = np.ones(k) / k  # Inicializa las probabilidades uniformemente
-        self.total_rewards = 0  # Para calcular la recompensa promedio
-        self.action_counts = np.zeros(k)  # Contador de selecciones por brazo
-
+        self.H = np.zeros(k, dtype=float)  # H_t(a) - preferencias numéricas
+        self.average_reward = 0.0  # R̄_t - recompensa promedio
+        self.t = 0  # contador de tiempo
+        
+    def _compute_action_probabilities(self) -> np.ndarray:
+        """
+        Calcula π_t(a) = e^(H_t(a)) / Σ e^(H_t(b)) para todas las acciones.
+        
+        Returns:
+            np.ndarray: Vector de probabilidades π_t(a)
+        """
+        # Estabilidad numérica: restamos el máximo antes de exp
+        H_stable = self.H - np.max(self.H)
+        exp_H = np.exp(H_stable)
+        return exp_H / np.sum(exp_H)
+        
     def select_arm(self) -> int:
         """
-        Selecciona un brazo basado en las probabilidades (softmax).
-        :return: Índice del brazo seleccionado.
-        """
-        max_preference = np.max(self.preferences)  # Evita overflow numérico
-        exp_preferences = np.exp(self.preferences - max_preference)
-        self.probabilities = exp_preferences / np.sum(exp_preferences)
+        Selecciona una acción según las probabilidades π_t(a).
         
-        chosen_arm = np.random.choice(self.k, p=self.probabilities)
-        return chosen_arm
-    
+        Returns:
+            int: Índice de la acción seleccionada
+        """
+        probabilities = self._compute_action_probabilities()
+        return np.random.choice(self.k, p=probabilities)
+        
     def update(self, chosen_arm: int, reward: float):
         """
-        Actualiza las preferencias basadas en la recompensa recibida.
-
-        :param chosen_arm: Índice del brazo seleccionado.
-        :param reward: Recompensa obtenida.
+        Actualiza las preferencias H_t(a) según las ecuaciones de Sutton y Barto:
+        H_(t+1)(A_t) = H_t(A_t) + α(R_t - R̄_t)(1 - π_t(A_t))
+        H_(t+1)(a) = H_t(a) - α(R_t - R̄_t)π_t(a) para a ≠ A_t
+        
+        Args:
+            chosen_arm (int): A_t - acción seleccionada
+            reward (float): R_t - recompensa recibida
         """
-        self.total_rewards += reward
-        self.action_counts[chosen_arm] += 1
-        avg_reward = self.total_rewards / np.sum(self.action_counts)  # Recompensa promedio acumulada
-
-        # Actualiza las preferencias usando el gradiente
+        self.t += 1
+        
+        # Actualizar promedio de recompensa (R̄_t)
+        self.average_reward += (reward - self.average_reward) / self.t
+        
+        # Calcular probabilidades actuales π_t(a)
+        probabilities = self._compute_action_probabilities()
+        
+        # Calcular el término (R_t - R̄_t)
+        reward_diff = reward - self.average_reward
+        
+        # Actualizar preferencias para todas las acciones
         for arm in range(self.k):
             if arm == chosen_arm:
-                self.preferences[arm] += self.alpha * (reward - avg_reward) * (1 - self.probabilities[arm])
+                # H_(t+1)(A_t) = H_t(A_t) + α(R_t - R̄_t)(1 - π_t(A_t))
+                self.H[arm] += self.alpha * reward_diff * (1 - probabilities[arm])
             else:
-                self.preferences[arm] -= self.alpha * (reward - avg_reward) * self.probabilities[arm]
-
-
-
-
+                # H_(t+1)(a) = H_t(a) - α(R_t - R̄_t)π_t(a)
+                self.H[arm] -= self.alpha * reward_diff * probabilities[arm]
+    
+    def reset(self):
+        """
+        Reinicia el algoritmo a su estado inicial.
+        """
+        super().reset()
+        self.H = np.zeros(self.k, dtype=float)
+        self.average_reward = 0.0
+        self.t = 0

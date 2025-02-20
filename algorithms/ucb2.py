@@ -35,7 +35,7 @@ class UCB2(Algorithm):
 
         if self.selected_arm is not None and self.rounds_left > 0:
             self.rounds_left -=1
-            return self.select_arm
+            return self.selected_arm
 
         for arm in range(self.k):
             if self.counts[arm] == 0:
