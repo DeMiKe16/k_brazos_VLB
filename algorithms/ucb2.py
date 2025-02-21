@@ -45,9 +45,10 @@ class UCB2(Algorithm):
                 return arm
         
         t = np.sum(self.counts)
+        ucb2 = np.zeros(self.k)
         for arm in range(self.k):
             tau = self.calc_tau(arm)
-            ucb2 = self.values + np.sqrt(((1+self.alpha)*np.log((np.e * t)/tau))/2*tau)
+            ucb2[arm] = self.values[arm] + np.sqrt(((1+self.alpha)*np.log((np.e * t)/tau))/2*tau)
             
         chosen_arm = np.argmax(ucb2)
         self.selected_arm = chosen_arm
