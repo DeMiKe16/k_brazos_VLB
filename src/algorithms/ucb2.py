@@ -52,8 +52,8 @@ class UCB2(Algorithm):
             
         chosen_arm = np.argmax(ucb2)
         self.selected_arm = chosen_arm
-        tau = self.calc_tau(arm)
-        next_tau = self.calc_nextTau(arm)
+        tau = self.calc_tau(chosen_arm)
+        next_tau = self.calc_nextTau(chosen_arm)
 
         self.rounds_left = next_tau - tau
 
