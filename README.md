@@ -1,5 +1,5 @@
 # Título del Trabajo
-Practica 1. Bandido de k-brazos
+Práctica 1: Problema del Bandido de k-brazos.
 ## Información
 - **Alumnos:** López Cuéllar, Alejandro;  Vera Frutos, Miguel Ángel; Belda Fernández, Alejandro
 - **Asignatura:** Extensiones de Machine Learning
