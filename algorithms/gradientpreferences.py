@@ -18,18 +18,6 @@ class GradientPreference(Algorithm):
         self.average_reward = 0.0  # R̄_t - recompensa promedio
         self.t = 0  # contador de tiempo
         
-    def _compute_action_probabilities(self) -> np.ndarray:
-        """
-        Calcula π_t(a) = e^(H_t(a)) / Σ e^(H_t(b)) para todas las acciones.
-        
-        Returns:
-            np.ndarray: Vector de probabilidades π_t(a)
-        """
-        # Estabilidad numérica: restamos el máximo antes de exp
-        H_stable = self.H - np.max(self.H)
-        exp_H = np.exp(H_stable)
-        return exp_H / np.sum(exp_H)
-        
     def select_arm(self) -> int:
         """
         Selecciona una acción según las probabilidades π_t(a).
@@ -37,8 +25,9 @@ class GradientPreference(Algorithm):
         Returns:
             int: Índice de la acción seleccionada
         """
-        probabilities = self._compute_action_probabilities()
-        return np.random.choice(self.k, p=probabilities)
+        H_stable = self.H - np.max(self.H)
+        exp_H = np.exp(H_stable)
+        return np.random.choice(self.k, p=exp_H / np.sum(exp_H))
         
     def update(self, chosen_arm: int, reward: float):
         """
@@ -56,7 +45,9 @@ class GradientPreference(Algorithm):
         self.average_reward += (reward - self.average_reward) / self.t
         
         # Calcular probabilidades actuales π_t(a)
-        probabilities = self._compute_action_probabilities()
+        H_stable = self.H - np.max(self.H)
+        exp_H = np.exp(H_stable)
+        probabilities = exp_H / np.sum(exp_H)
         
         # Calcular el término (R_t - R̄_t)
         reward_diff = reward - self.average_reward
