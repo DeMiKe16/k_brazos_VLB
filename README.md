@@ -23,7 +23,7 @@ La organización de los ficheros de este repositorio es la siguiente:
 - **notebook1.ipynb**: Fichero de Jupyter Notebook que contiene una breve introducción del problema y enlace a los estudios.
 - **etc.ipynb**: Ficheros de Jupyter Notebook que contienen los estudios de los diferentes algoritmos.
 ## Instalación y Uso
-Abri el fichero mai.ipynb y ejecutalo en Google Colab.
+Abrir cada fichero en colab con el enlace que se incluye. En cada notebook se incluira una celda para importar el repositorio, instalar librerias que no esten en Colab e importar librerias.
 ## Tecnologías Utilizadas
 Python
 Jupyter Notebook
